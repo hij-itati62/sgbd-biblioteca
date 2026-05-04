@@ -90,3 +90,21 @@ prompts_log.md
 - MiExamen.py es una versión visual adicional.
 - Los datos se guardan en:
 datos/biblioteca.json
+
+
+##  Resumen de cumplimiento de la rúbrica
+
+| Criterio           | Estado                       |
+|--------------------|------------------------------|
+| Type hints         |  Implementados               |
+| Docstrings         |  En clases principales       |
+| PEP 8              |  Nombres y estructura        |
+| Encapsulamiento    |  Uso de @property            |
+| Herencia           |  Libros y usuarios           |
+| Polimorfismo       |  Métodos como mostrar_info() |
+| Protocolo Buscable |  En Catalogo                 |
+| Colecciones        |  deque, Counter, defaultdict |
+| Persistencia JSON  |  Guardado y carga            |
+| Menú y control     |  match/case y try/except     |
+| Datos de prueba    |  Incluidos                   |
+| Manejo de errores  |  Básico y controlado         |
