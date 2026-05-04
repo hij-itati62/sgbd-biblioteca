@@ -1,5 +1,5 @@
 """Clase Préstamo que gestiona préstamos de libros."""
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Optional, Dict, Any
 
 from modelos.entidad import Entidad
@@ -19,8 +19,9 @@ class Prestamo(Entidad):
         self.email_usuario = email_usuario
         self.isbn_libro = isbn_libro
         self.fecha_prestamo = fecha_prestamo or datetime.now()
-        self.fecha_devolucion_esperada = fecha_devolucion_esperada or (
-            self.fecha_prestamo.date() + date.today().replace(year=date.today().year + 1).replace(day=1)  # simplificado: 30 días
+        self.fecha_devolucion_esperada = (
+            fecha_devolucion_esperada
+            or self.fecha_prestamo.date() + timedelta(days=30)
         )
         self.fecha_devolucion_real: Optional[datetime] = None
 
@@ -30,19 +31,19 @@ class Prestamo(Entidad):
 
     @property
     def esta_activo(self) -> bool:
+        """Indica si el préstamo sigue activo."""
         return self.fecha_devolucion_real is None
 
     def dias_retraso(self, fecha_referencia: Optional[datetime] = None) -> int:
-        """Calcula días de retraso (negativo si no hay retraso)."""
+        """Calcula los días de retraso del préstamo."""
         if not self.esta_activo:
             fecha_dev = self.fecha_devolucion_real
         else:
             fecha_dev = fecha_referencia or datetime.now()
 
-        esperada = self.fecha_devolucion_esperada
         devolucion = fecha_dev.date() if isinstance(fecha_dev, datetime) else fecha_dev
+        delta = (devolucion - self.fecha_devolucion_esperada).days
 
-        delta = (devolucion - esperada).days
         return max(0, delta)
 
     def __str__(self) -> str:
@@ -50,6 +51,7 @@ class Prestamo(Entidad):
         return f"Préstamo: {self.email_usuario} → ISBN {self.isbn_libro} [{estado}]"
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convierte el préstamo a diccionario para guardarlo en JSON."""
         return {
             "id": self.id,
             "fecha_creacion": self.fecha_creacion.isoformat(),
@@ -57,18 +59,31 @@ class Prestamo(Entidad):
             "isbn_libro": self.isbn_libro,
             "fecha_prestamo": self.fecha_prestamo.isoformat(),
             "fecha_devolucion_esperada": self.fecha_devolucion_esperada.isoformat(),
-            "fecha_devolucion_real": self.fecha_devolucion_real.isoformat() if self.fecha_devolucion_real else None,
+            "fecha_devolucion_real": (
+                self.fecha_devolucion_real.isoformat()
+                if self.fecha_devolucion_real
+                else None
+            ),
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Prestamo":
+        """Reconstruye un préstamo desde un diccionario."""
         prestamo = cls(
             email_usuario=data["email_usuario"],
             isbn_libro=data["isbn_libro"],
             fecha_prestamo=datetime.fromisoformat(data["fecha_prestamo"]),
+            fecha_devolucion_esperada=date.fromisoformat(
+                data["fecha_devolucion_esperada"]
+            ),
         )
+
         prestamo._id = data["id"]
         prestamo._fecha_creacion = datetime.fromisoformat(data["fecha_creacion"])
-        prestamo.fecha_devolucion_esperada = data["fecha_devolucion_esperada"]
-        prestamo.fecha_devolucion_real = datetime.fromisoformat(data["fecha_devolucion_real"]) if data["fecha_devolucion_real"] else None
+
+        if data["fecha_devolucion_real"]:
+            prestamo.fecha_devolucion_real = datetime.fromisoformat(
+                data["fecha_devolucion_real"]
+            )
+
         return prestamo
